@@ -1,0 +1,15 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "solar-mppt-project"
+version = "1.0.0"
+description = "Fuzzy Logic-Based MPPT Controller for Solar PV Systems"
+readme = "README.md"
+requires-python = ">=3.9"
+
+[tool.pytest.ini_options]
+minversion = "7.0"
+testpaths = ["tests"]
+pythonpath = ["."]
