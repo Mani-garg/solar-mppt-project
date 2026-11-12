@@ -86,9 +86,9 @@ with col1:
     st.markdown("### 2. Adaptive Fuzzy Control vs. Fixed-Step P&O")
     st.write(
         """
-        Conventional **Perturb and Observe (P&O)** algorithms rely on a static perturbation step 
+        conventional **Perturb and Observe (P&O)** algorithms rely on a static perturbation step 
         ($\\Delta D$), creating an unavoidable design trade-off:
-        - **Large $\\Delta D$:** Rapid dynamic tracking during irradiance steps, but severe steady-state limit-cycle power ripple ($\Delta P_{p-p}$), causing continuous energy loss.
+        - **Large $\\Delta D$:** Rapid dynamic tracking during irradiance steps, but severe steady-state limit-cycle power ripple ($\\Delta P_{p-p}$), causing continuous energy loss.
         - **Small $\\Delta D$:** Lower steady-state ripple, but sluggish transient response and vulnerability to tracking divergence during rapid cloud shadows.
         
         The **Mamdani Fuzzy Logic Controller (FLC)** eliminates this compromise through non-linear 
