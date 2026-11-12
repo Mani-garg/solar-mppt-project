@@ -161,31 +161,28 @@ def render_header(
     badge: str = "B.Tech Final-Year Project | Electrical Engineering",
     system_status: Optional[str] = None,
 ) -> None:
-    """Render clean institutional laboratory header."""
+    """Render clean institutional laboratory header without Markdown indentation conflicts."""
     status_html = f'<span class="status-pill">{system_status}</span>' if system_status else ""
-    html = textwrap.dedent(f"""
-    <div class="lab-header">
-        <div class="lab-meta">
-            <span>{badge}</span>
-            {status_html}
-        </div>
-        <div class="lab-title">{title}</div>
-        <div class="lab-subtitle">{subtitle}</div>
-    </div>
-    """).strip()
+    html = (
+        f'<div class="lab-header">'
+        f'<div class="lab-meta"><span>{badge}</span>{status_html}</div>'
+        f'<div class="lab-title">{title}</div>'
+        f'<div class="lab-subtitle">{subtitle}</div>'
+        f'</div>'
+    )
     st.markdown(html, unsafe_allow_html=True)
 
 
 def render_metric_card(title: str, value: str, sub: str = "") -> None:
-    """Render technical digital readout card."""
+    """Render technical digital readout card without Markdown indentation conflicts."""
     sub_html = f'<div class="telemetry-sub">{sub}</div>' if sub else ""
-    html = textwrap.dedent(f"""
-    <div class="telemetry-card">
-        <div class="telemetry-label">{title}</div>
-        <div class="telemetry-val">{value}</div>
-        {sub_html}
-    </div>
-    """).strip()
+    html = (
+        f'<div class="telemetry-card">'
+        f'<div class="telemetry-label">{title}</div>'
+        f'<div class="telemetry-val">{value}</div>'
+        f'{sub_html}'
+        f'</div>'
+    )
     st.markdown(html, unsafe_allow_html=True)
 
 
