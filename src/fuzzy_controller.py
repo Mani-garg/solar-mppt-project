@@ -8,7 +8,13 @@ from dataclasses import dataclass
 from typing import Tuple, Dict, Any, Optional
 import numpy as np
 import skfuzzy as fuzz
-from skfuzzy import control as ctrl
+
+try:
+    from skfuzzy import control as ctrl
+    HAS_SKFUZZY_CONTROL = True
+except (ImportError, ModuleNotFoundError):
+    ctrl = None
+    HAS_SKFUZZY_CONTROL = False
 
 from src.config import FuzzyControllerParams
 
@@ -66,41 +72,17 @@ class FuzzyMPPTController:
         self.prev_e = 0.0
 
     def _build_skfuzzy_system(self) -> None:
-        """Construct Mamdani FIS using scikit-fuzzy control API."""
-        # Antecedents and Consequent
-        self.var_e = ctrl.Antecedent(self.universe, "Error")
-        self.var_ce = ctrl.Antecedent(self.universe, "ChangeInError")
-        self.var_out = ctrl.Consequent(self.universe, "DeltaD")
+        """Construct Mamdani FIS using scikit-fuzzy and local analytical arrays."""
+        # Standalone output membership functions evaluated on universe
+        self.output_mfs = {
+            "NB": fuzz.trapmf(self.universe, [-1.0, -1.0, -0.5, -0.2]),
+            "NS": fuzz.trimf(self.universe, [-0.5, -0.2, 0.0]),
+            "ZE": fuzz.trimf(self.universe, [-0.2, 0.0, 0.2]),
+            "PS": fuzz.trimf(self.universe, [0.0, 0.2, 0.5]),
+            "PB": fuzz.trapmf(self.universe, [0.2, 0.5, 1.0, 1.0]),
+        }
 
-        # Membership functions (Standard Ruspini Fuzzy Partition)
-        # NB: trapezoid [-1.0, -1.0, -0.5, -0.2]
-        self.var_e["NB"] = fuzz.trapmf(self.universe, [-1.0, -1.0, -0.5, -0.2])
-        self.var_e["NS"] = fuzz.trimf(self.universe, [-0.5, -0.2, 0.0])
-        self.var_e["ZE"] = fuzz.trimf(self.universe, [-0.2, 0.0, 0.2])
-        self.var_e["PS"] = fuzz.trimf(self.universe, [0.0, 0.2, 0.5])
-        self.var_e["PB"] = fuzz.trapmf(self.universe, [0.2, 0.5, 1.0, 1.0])
-
-        self.var_ce["NB"] = fuzz.trapmf(self.universe, [-1.0, -1.0, -0.5, -0.2])
-        self.var_ce["NS"] = fuzz.trimf(self.universe, [-0.5, -0.2, 0.0])
-        self.var_ce["ZE"] = fuzz.trimf(self.universe, [-0.2, 0.0, 0.2])
-        self.var_ce["PS"] = fuzz.trimf(self.universe, [0.0, 0.2, 0.5])
-        self.var_ce["PB"] = fuzz.trapmf(self.universe, [0.2, 0.5, 1.0, 1.0])
-
-        self.var_out["NB"] = fuzz.trapmf(self.universe, [-1.0, -1.0, -0.5, -0.2])
-        self.var_out["NS"] = fuzz.trimf(self.universe, [-0.5, -0.2, 0.0])
-        self.var_out["ZE"] = fuzz.trimf(self.universe, [-0.2, 0.0, 0.2])
-        self.var_out["PS"] = fuzz.trimf(self.universe, [0.0, 0.2, 0.5])
-        self.var_out["PB"] = fuzz.trapmf(self.universe, [0.2, 0.5, 1.0, 1.0])
-
-        # Centroid defuzzification
-        self.var_out.defuzzify_method = "centroid"
-
-        # 5x5 Fuzzy Rule Base
-        # Rule Base Matrix: [Row = E, Col = CE] -> Output Delta D
-        # Physically matched to boost converter dynamics:
-        # E = dP/dV.
-        # If E < 0 (Right of MPP): Increase D -> Delta D is Positive (PB, PS)
-        # If E > 0 (Left of MPP): Decrease D -> Delta D is Negative (NB, NS)
+        # 5x5 Fuzzy Rule Base Matrix: [Row = E, Col = CE] -> Output Delta D
         self.rule_matrix = {
             # E == NB (V >> Vmpp)
             ("NB", "NB"): "PB",
@@ -134,16 +116,35 @@ class FuzzyMPPTController:
             ("PB", "PB"): "NB",
         }
 
-        rules = []
-        for (e_term, ce_term), out_term in self.rule_matrix.items():
-            rule = ctrl.Rule(
-                self.var_e[e_term] & self.var_ce[ce_term],
-                self.var_out[out_term]
-            )
-            rules.append(rule)
+        # Optional scikit-fuzzy control system construction (if networkx available)
+        self.control_system = None
+        self.sim = None
+        if HAS_SKFUZZY_CONTROL and ctrl is not None:
+            try:
+                self.var_e = ctrl.Antecedent(self.universe, "Error")
+                self.var_ce = ctrl.Antecedent(self.universe, "ChangeInError")
+                self.var_out = ctrl.Consequent(self.universe, "DeltaD")
 
-        self.control_system = ctrl.ControlSystem(rules)
-        self.sim = ctrl.ControlSystemSimulation(self.control_system)
+                for term, mf_arr in self.output_mfs.items():
+                    if term in ["NB", "PB"]:
+                        bounds = [-1.0, -1.0, -0.5, -0.2] if term == "NB" else [0.2, 0.5, 1.0, 1.0]
+                        self.var_e[term] = fuzz.trapmf(self.universe, bounds)
+                        self.var_ce[term] = fuzz.trapmf(self.universe, bounds)
+                        self.var_out[term] = fuzz.trapmf(self.universe, bounds)
+                    else:
+                        bounds = [-0.5, -0.2, 0.0] if term == "NS" else ([-0.2, 0.0, 0.2] if term == "ZE" else [0.0, 0.2, 0.5])
+                        self.var_e[term] = fuzz.trimf(self.universe, bounds)
+                        self.var_ce[term] = fuzz.trimf(self.universe, bounds)
+                        self.var_out[term] = fuzz.trimf(self.universe, bounds)
+
+                self.var_out.defuzzify_method = "centroid"
+                rules = []
+                for (e_term, ce_term), out_term in self.rule_matrix.items():
+                    rules.append(ctrl.Rule(self.var_e[e_term] & self.var_ce[ce_term], self.var_out[out_term]))
+                self.control_system = ctrl.ControlSystem(rules)
+                self.sim = ctrl.ControlSystemSimulation(self.control_system)
+            except Exception:
+                self.sim = None
 
     def compute_membership(self, val: float) -> Dict[str, float]:
         """Compute degree of membership for a scalar in [-1, 1] across all 5 terms."""
@@ -220,7 +221,7 @@ class FuzzyMPPTController:
         for term, strength in out_strengths.items():
             if strength > 0.0:
                 # Clip membership function at firing strength
-                term_mf = self.var_out[term].mf
+                term_mf = self.output_mfs[term]
                 clipped = np.minimum(strength, term_mf)
                 mu_agg = np.maximum(mu_agg, clipped)
 
