@@ -16,9 +16,10 @@ st.set_page_config(
 apply_custom_styles()
 
 render_header(
-    title="Academic & Technical Documentation",
-    subtitle="Mathematical Formulations, Electrical Derivations, Fuzzy Inference Theory & Converter Modeling",
-    badge="B.Tech Final-Year Comprehensive Reference Manual",
+    title="Academic & Technical Documentation Manual",
+    subtitle="Mathematical Formulations, Physical Semiconductor Derivations, Fuzzy Inference & Converter Modeling",
+    badge="Module 5: Mathematical Reference & Theoretical Formulations",
+    system_status="Reference Manual: IEEE Standard 1547 / IEC 61215",
 )
 
 # Documentation Sections

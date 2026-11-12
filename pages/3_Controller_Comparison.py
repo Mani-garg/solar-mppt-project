@@ -40,14 +40,15 @@ st.set_page_config(
 apply_custom_styles()
 
 render_header(
-    title="MPPT Controller Comparison Benchmark",
-    subtitle="Rigorous Side-by-Side Evaluation: Fuzzy Logic MPPT vs Classical Perturb & Observe",
-    badge="Benchmark Analysis: Transient Speed, Tracking Efficiency & Steady-State Ripple",
+    title="MPPT Controller Benchmark Comparison",
+    subtitle="Comparative Evaluation: Adaptive Mamdani Fuzzy Logic vs Conventional Fixed-Step P&O",
+    badge="Module 3: Benchmark & Comparative Control Analysis",
+    system_status="Evaluation: Dual Simultaneous Multi-Rate RK4",
 )
 
 # Sidebar Parameters
 with st.sidebar:
-    st.subheader("🌤️ Environmental Test Benchmark")
+    st.markdown("### Test Disturbance Scenario")
     duration = st.slider("Simulation Duration (s)", 0.3, 2.0, 0.6, 0.1)
 
     profiles = get_available_profiles(duration=duration)
@@ -66,11 +67,11 @@ with st.sidebar:
     active_profile = profiles[profile_key]
 
     st.markdown("---")
-    st.subheader("⚙️ Controller Tuning")
-    f_step_scaling = st.slider("Fuzzy Output Scaling (K_delta_d)", 0.005, 0.040, 0.015, 0.005)
+    st.markdown("### Algorithm Tuning Parameters")
+    f_step_scaling = st.slider("Fuzzy Duty Gain (K_delta_d)", 0.005, 0.040, 0.015, 0.005)
     po_step_size = st.slider("P&O Perturbation Step (ΔD)", 0.002, 0.030, 0.008, 0.002)
     sampling_time = st.select_slider(
-        "Sampling Time Ts (s)",
+        "Sampling Period Ts (s)",
         options=[0.002, 0.005, 0.010],
         value=0.005,
         format_func=lambda x: f"{x*1000:.0f} ms"
@@ -94,7 +95,7 @@ f_ctrl = FuzzyMPPTController(params=FuzzyControllerParams(k_delta_d=f_step_scali
 p_ctrl = POController(params=POControllerParams(delta_d_step=po_step_size, sampling_time=sampling_time))
 
 # Execution button
-run_btn = st.button("🚀 Run Dual Benchmark Simulation", use_container_width=True)
+run_btn = st.button("Execute Dual Benchmark Run", use_container_width=True)
 
 cache_key = f"comp_{profile_key}_{duration}_{f_step_scaling}_{po_step_size}"
 if run_btn or cache_key not in st.session_state:
@@ -110,21 +111,21 @@ metrics_fuzzy = compute_metrics(df_fuzzy, transition_times=active_profile.transi
 metrics_po = compute_metrics(df_po, transition_times=active_profile.transition_times)
 
 # Key Comparison KPI Cards
-st.markdown("### 🏆 Performance Summary Cards")
+st.markdown("### Comparative Performance Summary")
 comp_cols = st.columns(4)
 
 with comp_cols[0]:
     eff_diff = metrics_fuzzy.tracking_efficiency_energy - metrics_po.tracking_efficiency_energy
     render_metric_card(
-        "Tracking Efficiency (η)",
+        "Tracking Factor η_MPPT",
         f"{metrics_fuzzy.tracking_efficiency_energy:.2f}% vs {metrics_po.tracking_efficiency_energy:.2f}%",
-        f"Fuzzy advantage: {eff_diff:+.2f}%"
+        f"Fuzzy differential: {eff_diff:+.2f}%"
     )
 
 with comp_cols[1]:
     e_diff = (metrics_fuzzy.energy_extracted_wh - metrics_po.energy_extracted_wh) * 1000.0  # mWh
     render_metric_card(
-        "Energy Extracted",
+        "Total Energy Yield",
         f"{metrics_fuzzy.energy_extracted_wh:.4f} Wh",
         f"P&O: {metrics_po.energy_extracted_wh:.4f} Wh ({e_diff:+.1f} mWh)"
     )
@@ -138,9 +139,9 @@ with comp_cols[2]:
 
 with comp_cols[3]:
     st_f = f"{metrics_fuzzy.settling_time_s*1000:.1f} ms" if metrics_fuzzy.settling_time_s else "N/A"
-    st_p = f"{metrics_po.settling_time_s*1000:.1f} ms" if metrics_po.settling_time_s else "Continuous Oscillation"
+    st_p = f"{metrics_po.settling_time_s*1000:.1f} ms" if metrics_po.settling_time_s else "Continuous Limit Cycle"
     render_metric_card(
-        "Settling Time",
+        "Settling Time (±2%)",
         f"{st_f} (FLC)",
         f"P&O: {st_p}"
     )
@@ -148,50 +149,50 @@ with comp_cols[3]:
 st.markdown("---")
 
 # Direct Comparison Charts
-st.markdown("### 📊 Direct Dynamic Overlay Tracking")
+st.markdown("### Dynamic Tracking Overlays")
 fig_comp = plot_controller_comparison_overlay(df_fuzzy, df_po, active_profile.transition_times)
 st.plotly_chart(fig_comp, use_container_width=True)
 
 st.markdown("---")
 
 # Detailed Comparison Table
-st.markdown("### 📋 Quantitative Performance Comparison Table")
+st.markdown("### Quantitative Performance Matrix")
 df_comparison_table = compare_controllers(metrics_fuzzy, metrics_po)
 st.dataframe(df_comparison_table, use_container_width=True, hide_index=True)
 
 # Technical Discussion
 st.markdown("---")
-st.markdown("### 🔬 Control Engineering Analysis")
+st.markdown("### Control Engineering Observations")
 disc_col1, disc_col2 = st.columns(2)
 
 with disc_col1:
-    st.markdown("#### 🟢 Why Fuzzy Logic Outperforms Conventional P&O")
+    st.markdown("#### Performance Differentiators")
     st.write(
         """
-        1. **Variable Perturbation Magnitude:**
-           Fuzzy Logic computes non-linear scaling between $dP/dV$ and $\\Delta D$. When far from MPP 
-           ($E = NB$ or $PB$), large duty adjustments are dispatched immediately. As the operating 
-           point enters the vicinity of the peak, the linguistic membership terms ($PS, NS, ZE$) 
-           exponentially throttle the step size.
-        2. **Elimination of 3-Point Limit Cycle:**
-           Conventional fixed-step P&O can never come to rest: by design, it perturbs forward, detects 
-           a drop in power, perturbs backward, and repeats indefinitely between 3 points. Fuzzy Logic 
-           MPPT naturally stabilizes around $E = ZE, CE = ZE$, resulting in virtually zero power ripple.
-        3. **Fast Transition Recovery:**
-           During rapid cloud transients, P&O can momentarily track in the wrong direction (tracking divergence 
-           due to $\\Delta P$ caused by irradiance rather than voltage perturbation). Fuzzy Logic accounts for 
-           rate-of-change ($CE$), minimizing false tracking during dynamic transitions.
+        1. **Adaptive Step Modulation:**
+           The Mamdani Fuzzy Inference System computes a non-linear scaling between error $E = dP/dV$ 
+           and duty cycle adjustment $\\Delta D$. When distant from MPP ($E = NB$ or $PB$), large duty 
+           increments are applied immediately. As the operating point nears the peak, linguistic terms 
+           ($PS, NS, ZE$) reduce the step magnitude.
+        2. **Limit Cycle Suppression:**
+           Conventional fixed-step P&O cannot come to rest: it perturbs forward, senses a drop in power, 
+           perturbs backward, and repeats indefinitely across 3 operating points. Fuzzy Logic MPPT 
+           stabilizes around $E = ZE, CE = ZE$, suppressing steady-state power ripple.
+        3. **Dynamic Transient Stability:**
+           During sudden cloud transients, P&O can momentarily track in the wrong direction due to 
+           measuring power drop caused by irradiance loss rather than duty perturbation. Fuzzy Logic 
+           incorporates change in error ($CE$), reducing drift during fast environmental shifts.
         """
     )
 
 with disc_col2:
-    st.markdown("#### 💾 Export Benchmark Comparison Data")
+    st.markdown("#### Export Benchmark Dataset")
     csv_comp = generate_csv_download(df_comparison_table, "mppt_controller_comparison_table.csv")
     st.download_button(
-        label="📥 Download Benchmark Comparison Table (CSV)",
+        label="Download Performance Matrix (CSV)",
         data=csv_comp,
         file_name="mppt_comparison_metrics.csv",
         mime="text/csv",
         use_container_width=True,
     )
-    st.caption("Contains complete side-by-side numerical metrics with exact differences and units.")
+    st.caption("Contains complete numerical figures of merit with units.")

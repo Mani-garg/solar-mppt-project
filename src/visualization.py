@@ -12,21 +12,21 @@ from plotly.subplots import make_subplots
 from src.pv_model import MPPResult
 
 
-# Professional Color Palette
-COLOR_FUZZY = "#10B981"      # Emerald Green
-COLOR_PO = "#EF4444"         # Coral Red
-COLOR_REF = "#0F172A"        # Deep Navy / Black
-COLOR_IRR = "#F59E0B"        # Amber
-COLOR_TEMP = "#EC4899"       # Rose
-COLOR_VOUT = "#6366F1"       # Indigo
-COLOR_IL = "#06B6D4"         # Cyan
-COLOR_DUTY = "#8B5CF6"       # Purple
+# Professional Scientific / IEEE Engineering Palette
+COLOR_FUZZY = "#059669"      # Forest / Emerald Green
+COLOR_PO = "#DC2626"         # Precision Red
+COLOR_REF = "#0F172A"        # Slate Black
+COLOR_IRR = "#D97706"        # Solar Amber
+COLOR_TEMP = "#BE185D"       # Thermal Magenta
+COLOR_VOUT = "#4338CA"       # Indigo
+COLOR_IL = "#0E7490"         # Cyan Teal
+COLOR_DUTY = "#6D28D9"       # Deep Purple
 
 LAYOUT_COMMON = dict(
     template="plotly_white",
-    font=dict(family="Segoe UI, -apple-system, sans-serif", size=12, color="#1E293B"),
+    font=dict(family="'IBM Plex Sans', -apple-system, sans-serif", size=11, color="#0F172A"),
     plot_bgcolor="#FFFFFF",
-    paper_bgcolor="#F8FAFC",
+    paper_bgcolor="#FFFFFF",
     margin=dict(l=60, r=40, t=50, b=50),
     hovermode="x unified",
 )

@@ -40,20 +40,21 @@ apply_custom_styles()
 
 render_header(
     title="In-Depth Performance & Loss Analysis",
-    subtitle="Semiconductor Loss Breakdown, Dynamic Impedance Matching, 3D Control Surface & Academic Report",
-    badge="Advanced Electrical & Control Systems Engineering",
+    subtitle="Semiconductor Loss Breakdown, Dynamic Impedance Matching, 3D Decision Surface & Project Report",
+    badge="Module 4: Performance & Loss Analysis",
+    system_status="Diagnostics: Active",
 )
 
 # Tabs for structured analysis
 tab_losses, tab_impedance, tab_surface, tab_report = st.tabs([
-    "⚡ Power & Energy Loss Analysis",
-    "🔌 Dynamic Impedance Matching",
-    "🧠 Fuzzy 3D Decision Surface",
-    "📑 Download Academic Project Report",
+    "Power & Energy Loss Analysis",
+    "Dynamic Impedance Matching",
+    "Fuzzy 3D Decision Surface",
+    "Project Report Generator",
 ])
 
 with tab_losses:
-    st.markdown("### 📉 Instantaneous & Cumulative Power Loss Analysis")
+    st.markdown("### Instantaneous & Cumulative Tracking Loss")
     st.write(
         """
         Energy extraction loss occurs whenever the instantaneous PV operating voltage $V_{pv}(t)$ 
@@ -119,7 +120,7 @@ with tab_losses:
     st.plotly_chart(fig_loss, use_container_width=True)
 
 with tab_impedance:
-    st.markdown("### 🔌 Dynamic Impedance Matching in DC-DC Boost Converters")
+    st.markdown("### Dynamic Impedance Matching in DC-DC Boost Converters")
     st.write(
         """
         By Jacobi's Maximum Power Transfer Theorem, maximum electrical power transfer occurs 
@@ -150,7 +151,7 @@ with tab_impedance:
             y=r_in_vals,
             mode="lines",
             name="Converter Input Impedance R_in(D)",
-            line=dict(color="#2563EB", width=2.5),
+            line=dict(color="#1D4ED8", width=2.5),
         )
     )
     fig_imp.add_hline(
@@ -163,22 +164,22 @@ with tab_impedance:
     fig_imp.add_vline(
         x=d_opt_stc,
         line_dash="dot",
-        line_color="#10B981",
+        line_color="#059669",
         annotation_text=f"Optimal Duty Cycle D* ≈ {d_opt_stc:.3f}",
         annotation_position="bottom right",
     )
 
-    fig_imp.update_xaxes(title_text="Boost Converter Duty Cycle (D)", gridcolor="#E2E8F0")
-    fig_imp.update_yaxes(title_text="Input Impedance Seen by PV (Ω)", gridcolor="#E2E8F0")
+    fig_imp.update_xaxes(title_text="Boost Converter Duty Cycle (D)", gridcolor="#F1F5F9")
+    fig_imp.update_yaxes(title_text="Input Impedance Seen by PV (Ω)", gridcolor="#F1F5F9")
     fig_imp.update_layout(
         **LAYOUT_COMMON,
-        title_text=f"Converter Impedance Characteristic (R_load = {r_load_val} Ω)",
+        title_text=f"Converter Input Impedance Characteristic (R_load = {r_load_val} Ω)",
         height=420,
     )
     st.plotly_chart(fig_imp, use_container_width=True)
 
 with tab_surface:
-    st.markdown("### 🧠 Fuzzy Logic Controller Internal Structure")
+    st.markdown("### Fuzzy Logic Controller Structure & Decision Surface")
     st.write(
         """
         The 2-input, 1-output Mamdani Fuzzy Inference System evaluates Error ($E = dP/dV$) 
@@ -202,12 +203,12 @@ with tab_surface:
     st.plotly_chart(fig_surf, use_container_width=True)
 
 with tab_report:
-    st.markdown("### 📑 Generate & Download Project Report")
+    st.markdown("### Technical Project Report Generator")
     st.write(
         """
-        Download a complete, auto-generated academic technical report containing all mathematical 
-        models, simulation configurations, verified tracking metrics, comparison tables, and 
-        engineering conclusions. Suitable for academic submission and final-year evaluation.
+        Export a complete academic technical report containing system parameters, 
+        numerical solver configurations, verified tracking figures of merit, and comparison matrices. 
+        Suitable for academic evaluation and thesis documentation.
         """
     )
 
@@ -239,12 +240,12 @@ with tab_report:
 
     # Download button
     st.download_button(
-        label="📥 Download Full Academic Report (Markdown / Project Document)",
+        label="Download Academic Project Report (Markdown)",
         data=report_content.encode("utf-8"),
         file_name="Fuzzy_Logic_Solar_MPPT_Academic_Report.md",
         mime="text/markdown",
         use_container_width=True,
     )
 
-    with st.expander("👁️ Preview Generated Academic Report"):
+    with st.expander("Preview Generated Academic Report"):
         st.markdown(report_content)

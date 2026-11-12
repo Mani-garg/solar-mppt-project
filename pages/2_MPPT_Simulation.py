@@ -41,28 +41,29 @@ st.set_page_config(
 apply_custom_styles()
 
 render_header(
-    title="Time-Domain MPPT Simulation",
-    subtitle="Closed-Loop Dynamic Analysis of Boost Converter States and Real-Time Tracking Response",
-    badge="Subsystem 2 & 3: Converter Dynamics & Intelligent MPPT Tracking",
+    title="Closed-Loop Time-Domain MPPT Simulation",
+    subtitle="Continuous-Conduction Boost Converter State-Space Dynamics with Multi-Rate Digital Controller",
+    badge="Module 2: Time-Domain Dynamic Response",
+    system_status="Solver: RK4 (dt = 50 µs) | Controller: Discrete-Time",
 )
 
 # Sidebar Controls
 with st.sidebar:
-    st.subheader("🎮 Controller Selection")
+    st.markdown("### MPPT Algorithm Selection")
     ctrl_type = st.radio(
-        "Active MPPT Algorithm",
+        "Active Control Law",
         options=["Fuzzy Logic MPPT", "Perturb and Observe (P&O)"],
         index=0,
         help="Select the intelligent fuzzy controller or the classical P&O baseline."
     )
 
     st.markdown("---")
-    st.subheader("🌤️ Environmental Scenario")
+    st.markdown("### Environmental Disturbance Profile")
     duration = st.slider("Simulation Duration (s)", min_value=0.2, max_value=2.0, value=0.5, step=0.1)
 
     profiles = get_available_profiles(duration=duration)
     scenario_choice = st.selectbox(
-        "Environmental Profile",
+        "Test Scenario",
         options=[
             "Scenario A: Constant STC",
             "Scenario B: Sudden Irradiance Drop",
@@ -76,7 +77,7 @@ with st.sidebar:
     active_profile = profiles[profile_key]
 
     st.markdown("---")
-    st.subheader("⚙️ Simulation Settings")
+    st.markdown("### Numerical Solver Parameters")
     time_step = st.select_slider(
         "Numerical Time Step dt (s)",
         options=[2.5e-5, 5e-5, 1e-4],
@@ -84,21 +85,21 @@ with st.sidebar:
         format_func=lambda x: f"{x*1e6:.0f} µs"
     )
     sampling_time = st.select_slider(
-        "Controller Sampling Time Ts (s)",
+        "Digital Sampling Period Ts (s)",
         options=[0.002, 0.005, 0.010],
         value=0.005,
-        format_func=lambda x: f"{x*1000:.0f} ms"
+        format_func=lambda x: f"{x*1000:.0f} ms (fs = {1.0/x:.0f} Hz)"
     )
 
-    with st.expander("🛠️ Advanced Tuning & Converter Limits"):
-        d_min = st.slider("Min Duty Cycle D_min", 0.01, 0.20, 0.05, 0.01)
-        d_max = st.slider("Max Duty Cycle D_max", 0.70, 0.99, 0.90, 0.01)
+    with st.expander("Controller Tuning & Power Stage Limits"):
+        d_min = st.slider("Minimum Duty Limit D_min", 0.01, 0.20, 0.05, 0.01)
+        d_max = st.slider("Maximum Duty Limit D_max", 0.70, 0.99, 0.90, 0.01)
         initial_d = st.slider("Initial Duty Cycle D_init", d_min, d_max, 0.30, 0.05)
 
         if "Fuzzy" in ctrl_type:
-            ke = st.number_input("Error Normalization Ke", value=10.0, step=1.0)
-            kce = st.number_input("Change in Error Normalization Kce", value=100.0, step=10.0)
-            k_delta_d = st.number_input("Duty Cycle Step Scaling K_delta_d", value=0.015, step=0.005, format="%.3f")
+            ke = st.number_input("Error Normalization Factor Ke", value=10.0, step=1.0)
+            kce = st.number_input("Change in Error Factor Kce", value=100.0, step=10.0)
+            k_delta_d = st.number_input("Duty Step Gain K_delta_d", value=0.015, step=0.005, format="%.3f")
         else:
             po_step = st.number_input("P&O Perturbation Step ΔD", value=0.008, step=0.002, format="%.3f")
 
@@ -150,12 +151,12 @@ else:
 # Run Simulation Action
 col_run, col_status = st.columns([1, 4])
 with col_run:
-    run_btn = st.button("🚀 Run MPPT Simulation", use_container_width=True)
+    run_btn = st.button("Execute Simulation", use_container_width=True)
 
 # Session state persistence for simulation results
 state_key = f"sim_res_{ctrl_type}_{profile_key}_{duration}"
 if run_btn or state_key not in st.session_state:
-    with st.spinner(f"Integrating continuous boost dynamics with {ctrl_type}..."):
+    with st.spinner(f"Solving continuous boost dynamics with {ctrl_type}..."):
         df_sim = engine.run(
             controller=controller,
             controller_sampling_time=sampling_time,
@@ -175,40 +176,40 @@ metrics = compute_metrics(
 # Display Key Performance Indicator (KPI) Cards
 kpi_cols = st.columns(6)
 with kpi_cols[0]:
-    render_metric_card("Tracking Efficiency (η)", f"{metrics.tracking_efficiency_energy:.2f} %", "Energy-based extraction")
+    render_metric_card("Energy Tracking η_MPPT", f"{metrics.tracking_efficiency_energy:.2f} %", "Integral energy ratio")
 with kpi_cols[1]:
-    render_metric_card("Total Energy (Wh)", f"{metrics.energy_extracted_wh:.4f} Wh", f"Loss: {metrics.energy_loss_wh:.4f} Wh")
+    render_metric_card("Total Energy Yield", f"{metrics.energy_extracted_wh:.4f} Wh", f"Loss: {metrics.energy_loss_wh:.4f} Wh")
 with kpi_cols[2]:
-    render_metric_card("Average PV Power", f"{metrics.avg_pv_power:.1f} W", f"Peak: {metrics.peak_pv_power:.1f} W")
+    render_metric_card("Average Array Power", f"{metrics.avg_pv_power:.2f} W", f"Peak: {metrics.peak_pv_power:.2f} W")
 with kpi_cols[3]:
-    st_str = f"{metrics.settling_time_s * 1000.0:.1f} ms" if metrics.settling_time_s is not None else "Oscillating"
-    render_metric_card("Settling Time", st_str, "Within ±2% band")
+    st_str = f"{metrics.settling_time_s * 1000.0:.1f} ms" if metrics.settling_time_s is not None else "Limit Cycle Osc."
+    render_metric_card("Settling Time (±2%)", st_str, "Step disturbance transient")
 with kpi_cols[4]:
-    render_metric_card("Steady-State Ripple (ΔP)", f"{metrics.oscillation_amplitude_w:.3f} W", f"Std Dev: {metrics.oscillation_std_w:.3f} W")
+    render_metric_card("Steady-State Ripple (ΔP)", f"{metrics.oscillation_amplitude_w:.3f} W", f"Std Dev σ: {metrics.oscillation_std_w:.3f} W")
 with kpi_cols[5]:
     render_metric_card("Converter Efficiency", f"{metrics.converter_avg_efficiency:.1f} %", f"P_load / P_pv (R={load_r}Ω)")
 
 st.markdown("---")
 
 # Environmental Condition Timeline
-st.markdown("### ☀️ Environmental Disturbance Profile")
+st.markdown("### Environmental Profile Timeline (G and T)")
 fig_env = plot_environmental_conditions(df_sim, active_profile.transition_times)
 st.plotly_chart(fig_env, use_container_width=True)
 
 # Real-Time Telemetry Graphs
-st.markdown(f"### 📊 Dynamic Response: {ctrl_type}")
+st.markdown(f"### Time-Domain State Trajectories: {ctrl_type}")
 fig_sim = plot_single_mppt_response(df_sim, active_profile.transition_times)
 st.plotly_chart(fig_sim, use_container_width=True)
 
 # Telemetry Data Export Section
 st.markdown("---")
-st.markdown("### 💾 Export Simulation Telemetry")
+st.markdown("### Telemetry Data Export")
 d_col1, d_col2 = st.columns(2)
 
 with d_col1:
     csv_data = generate_csv_download(df_sim, "mppt_simulation_telemetry.csv")
     st.download_button(
-        label="📥 Download Telemetry Time-Series (CSV)",
+        label="Download Telemetry Dataset (CSV)",
         data=csv_data,
         file_name=f"mppt_{ctrl_type.replace(' ', '_').lower()}_{profile_key}.csv",
         mime="text/csv",
@@ -234,10 +235,10 @@ with d_col2:
     }
     json_str = generate_json_download(meta_dict, "mppt_config_and_metrics.json")
     st.download_button(
-        label="📥 Download Run Metadata & Metrics (JSON)",
+        label="Download Run Metadata (JSON)",
         data=json_str,
         file_name=f"mppt_metadata_{ctrl_type.replace(' ', '_').lower()}.json",
         mime="application/json",
         use_container_width=True,
     )
-    st.caption("Machine-readable JSON export of all physical constants, settings, and verified performance metrics.")
+    st.caption("Machine-readable JSON export of physical constants, simulation parameters, and performance metrics.")

@@ -22,14 +22,15 @@ st.set_page_config(
 apply_custom_styles()
 
 render_header(
-    title="Photovoltaic (PV) Panel Simulator",
-    subtitle="Single-Diode Physical Modeling, Characteristic Curve Analysis & Reference MPP Extraction",
-    badge="Subsystem 1: Solar PV Electrical Generator",
+    title="Photovoltaic (PV) Semiconductor Array Simulator",
+    subtitle="Five-Parameter Single-Diode Model Characterization and Numerical Reference MPP Extraction",
+    badge="Module 1: Photovoltaic Generator Characterization",
+    system_status="Model: Lambert W0 Exact Formulation",
 )
 
 # Sidebar Parameters
 with st.sidebar:
-    st.subheader("☀️ Environmental Conditions")
+    st.markdown("### Environmental Conditions")
     irradiance = st.slider(
         "Solar Irradiance G (W/m²)",
         min_value=100.0,
@@ -39,7 +40,7 @@ with st.sidebar:
         help="Standard Test Condition (STC) irradiance is 1000 W/m²."
     )
     temperature_c = st.slider(
-        "Cell Temperature T (°C)",
+        "Cell Junction Temperature T (°C)",
         min_value=-10.0,
         max_value=85.0,
         value=25.0,
@@ -48,21 +49,21 @@ with st.sidebar:
     )
 
     st.markdown("---")
-    st.subheader("🔋 Module & Array Setup")
+    st.markdown("### Array Configuration")
     module_choice = st.selectbox(
-        "Select PV Module Preset",
+        "PV Module Specification",
         options=list(PRESET_MODULES.keys()),
         index=0,
     )
     base_module = PRESET_MODULES[module_choice]
 
     n_series = st.number_input(
-        "Modules in Series (Ns)",
+        "Series Modules (Ns)",
         min_value=1,
         max_value=20,
         value=1,
         step=1,
-        help="Increases total array voltage: V_array = Ns * V_module"
+        help="Increases total string voltage: V_array = Ns * V_module"
     )
     n_parallel = st.number_input(
         "Parallel Strings (Np)",
@@ -70,10 +71,10 @@ with st.sidebar:
         max_value=20,
         value=1,
         step=1,
-        help="Increases total array current: I_array = Np * I_module"
+        help="Increases total string current: I_array = Np * I_module"
     )
 
-    with st.expander("⚙️ Advanced Diode Parameters"):
+    with st.expander("Single-Diode Circuit Parameters"):
         r_s_custom = st.number_input("Series Resistance Rs (Ω)", value=float(base_module.r_s), step=0.05, format="%.3f")
         r_sh_custom = st.number_input("Shunt Resistance Rsh (Ω)", value=float(base_module.r_sh), step=10.0, format="%.1f")
         n_custom = st.number_input("Ideality Factor n", value=float(base_module.ideality_n), step=0.01, format="%.2f")
@@ -131,7 +132,7 @@ with kpi_cols[5]:
 st.markdown("---")
 
 # Characteristic Curves Plot
-st.markdown("### 📈 Real-Time Characteristic Curves")
+st.markdown("### Characteristic Output Curves (I-V and P-V)")
 fig = plot_iv_pv_curves(v_vec, i_vec, p_vec, mpp)
 st.plotly_chart(fig, use_container_width=True)
 
@@ -139,25 +140,25 @@ st.plotly_chart(fig, use_container_width=True)
 exp_col1, exp_col2 = st.columns([3, 1])
 
 with exp_col1:
-    st.markdown("#### 🔬 Physical Engineering Insights")
+    st.markdown("#### Parameter Sensitivity & Physical Behavior")
     st.markdown(
         f"""
-        - **Irradiance Sensitivity:** At **{irradiance:.0f} W/m²**, short-circuit current is 
-          **{mpp.i_sc:.2f} A**. Short-circuit current $I_{{sc}}$ is directly proportional to incident 
-          solar photon flux ($I_{{ph}} \\propto G$).
-        - **Temperature Sensitivity:** At **{temperature_c:.1f}°C**, open-circuit voltage is 
-          **{mpp.v_oc:.2f} V**. As temperature increases, the semiconductor bandgap narrows, increasing 
-          reverse saturation current $I_0(T)$ exponentially and shifting $V_{{oc}}$ negatively at 
-          **{base_module.beta_voc:.3f} V/°C**.
-        - **Optimum Operating Point:** Maximum electrical power is achieved exclusively at 
+        - **Irradiance Dependency:** At **{irradiance:.0f} W/m²**, short-circuit current is 
+          **{mpp.i_sc:.2f} A**. Short-circuit current $I_{{sc}}$ varies linearly with incident photon flux 
+          ($I_{{ph}} \\propto G$). Series and shunt resistances cause the curve shoulder to round slightly.
+        - **Temperature Dependency:** At **{temperature_c:.1f}°C**, open-circuit voltage is 
+          **{mpp.v_oc:.2f} V**. As temperature increases, semiconductor bandgap narrowing elevates the 
+          intrinsic carrier concentration $n_i(T)$ and reverse saturation current $I_0(T)$, decreasing 
+          $V_{{oc}}$ at **{base_module.beta_voc:.3f} V/°C**.
+        - **Optimal Operating Knee:** The theoretical Maximum Power Point occurs at 
           $V_{{mpp}} = \\mathbf{{{mpp.v_mpp:.2f}\\text{{ V}}}}$ and $I_{{mpp}} = \\mathbf{{{mpp.i_mpp:.2f}\\text{{ A}}}}$, 
-          yielding $P_{{mpp}} = \\mathbf{{{mpp.p_mpp:.1f}\\text{{ W}}}}$. The MPPT controller's purpose 
-          is to dynamically lock the boost converter operating point at this voltage.
+          yielding $P_{{mpp}} = \\mathbf{{{mpp.p_mpp:.1f}\\text{{ W}}}}$. The MPPT controller modulates 
+          boost converter duty cycle $D$ to match this voltage dynamically.
         """
     )
 
 with exp_col2:
-    st.markdown("#### 💾 Export Curve Data")
+    st.markdown("#### Data Export")
     df_curves = pd.DataFrame({
         "voltage_v": v_vec,
         "current_a": i_vec,
@@ -165,9 +166,9 @@ with exp_col2:
     })
     csv_bytes = generate_csv_download(df_curves, "pv_characteristic_curves.csv")
     st.download_button(
-        label="Download I-V / P-V CSV",
+        label="Download I-V / P-V Data (CSV)",
         data=csv_bytes,
         file_name=f"pv_curves_G{int(irradiance)}_T{int(temperature_c)}.csv",
         mime="text/csv",
     )
-    st.caption("Contains 150 sampled voltage, current, and power points.")
+    st.caption("Sampled 150 points across [0, Voc].")
