@@ -198,6 +198,18 @@ def generate_json_download(data: Dict[str, Any], filename: str = "simulation_met
     return json.dumps(data, indent=2)
 
 
+def df_to_markdown_table(df: pd.DataFrame) -> str:
+    """Format DataFrame as an academic Markdown table without requiring external tabulate dependency."""
+    headers = [str(c) for c in df.columns]
+    header_line = "| " + " | ".join(headers) + " |"
+    sep_line = "| " + " | ".join(["---"] * len(headers)) + " |"
+    row_lines = []
+    for _, row in df.iterrows():
+        row_str = "| " + " | ".join(str(val) for val in row) + " |"
+        row_lines.append(row_str)
+    return "\n".join([header_line, sep_line] + row_lines)
+
+
 def generate_markdown_report(
     sim_settings: Dict[str, Any],
     metrics_summary: Dict[str, Any],
@@ -233,7 +245,7 @@ def generate_markdown_report(
 ## 3. Side-by-Side Performance Matrix
 """
     if comparison_df is not None:
-        report += "\n" + comparison_df.to_markdown(index=False) + "\n\n"
+        report += "\n" + df_to_markdown_table(comparison_df) + "\n\n"
 
     report += """
 ---
