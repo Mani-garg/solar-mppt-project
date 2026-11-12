@@ -159,14 +159,15 @@ def render_header(
     title: str,
     subtitle: str,
     badge: str = "B.Tech Final-Year Project | Electrical Engineering",
-    system_status: str = "System Ready",
+    system_status: Optional[str] = None,
 ) -> None:
-    """Render authentic institutional laboratory header."""
+    """Render clean institutional laboratory header."""
+    status_html = f'<span class="status-pill">{system_status}</span>' if system_status else ""
     html = textwrap.dedent(f"""
     <div class="lab-header">
         <div class="lab-meta">
             <span>{badge}</span>
-            <span class="status-pill">{system_status}</span>
+            {status_html}
         </div>
         <div class="lab-title">{title}</div>
         <div class="lab-subtitle">{subtitle}</div>

@@ -24,7 +24,6 @@ render_header(
     title="Photovoltaic Maximum Power Point Tracking (MPPT) Simulation Suite",
     subtitle="Discrete-Continuous Hybrid Simulation of Fuzzy Logic and Conventional P&O Algorithms",
     badge="Department of Electrical Engineering | Power Electronics & Renewable Energy Systems",
-    system_status="Solver: Lambert-W (Exact) | Core Online",
 )
 
 # Sidebar System Specs

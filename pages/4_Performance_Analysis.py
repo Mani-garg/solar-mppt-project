@@ -42,7 +42,6 @@ render_header(
     title="In-Depth Performance & Loss Analysis",
     subtitle="Semiconductor Loss Breakdown, Dynamic Impedance Matching, 3D Decision Surface & Project Report",
     badge="Module 4: Performance & Loss Analysis",
-    system_status="Diagnostics: Active",
 )
 
 # Tabs for structured analysis

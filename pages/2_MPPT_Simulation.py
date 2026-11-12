@@ -44,7 +44,6 @@ render_header(
     title="Closed-Loop Time-Domain MPPT Simulation",
     subtitle="Continuous-Conduction Boost Converter State-Space Dynamics with Multi-Rate Digital Controller",
     badge="Module 2: Time-Domain Dynamic Response",
-    system_status="Solver: RK4 (dt = 50 µs) | Controller: Discrete-Time",
 )
 
 # Sidebar Controls

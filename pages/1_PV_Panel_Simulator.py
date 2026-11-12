@@ -25,7 +25,6 @@ render_header(
     title="Photovoltaic (PV) Semiconductor Array Simulator",
     subtitle="Five-Parameter Single-Diode Model Characterization and Numerical Reference MPP Extraction",
     badge="Module 1: Photovoltaic Generator Characterization",
-    system_status="Model: Lambert W0 Exact Formulation",
 )
 
 # Sidebar Parameters

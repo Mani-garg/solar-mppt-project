@@ -43,7 +43,6 @@ render_header(
     title="MPPT Controller Benchmark Comparison",
     subtitle="Comparative Evaluation: Adaptive Mamdani Fuzzy Logic vs Conventional Fixed-Step P&O",
     badge="Module 3: Benchmark & Comparative Control Analysis",
-    system_status="Evaluation: Dual Simultaneous Multi-Rate RK4",
 )
 
 # Sidebar Parameters
