@@ -4,6 +4,7 @@ Provides styling and export capabilities (CSV, JSON, Markdown/HTML project repor
 """
 
 import json
+import textwrap
 from typing import Dict, Any, Optional
 import pandas as pd
 import streamlit as st
@@ -133,26 +134,26 @@ def render_header(
     badge: str = "B.Tech Electrical Engineering Final-Year Project",
 ) -> None:
     """Render consistent modern top header."""
-    html = f"""
+    html = textwrap.dedent(f"""
     <div class="main-header">
         <div class="badge">{badge}</div>
         <h1>{title}</h1>
         <p>{subtitle}</p>
     </div>
-    """
+    """).strip()
     st.markdown(html, unsafe_allow_html=True)
 
 
 def render_metric_card(title: str, value: str, sub: str = "") -> None:
     """Render custom KPI card."""
     sub_html = f'<div class="metric-sub">{sub}</div>' if sub else ""
-    html = f"""
+    html = textwrap.dedent(f"""
     <div class="metric-card">
         <div class="metric-title">{title}</div>
         <div class="metric-value">{value}</div>
         {sub_html}
     </div>
-    """
+    """).strip()
     st.markdown(html, unsafe_allow_html=True)
 
 

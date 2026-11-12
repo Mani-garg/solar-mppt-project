@@ -4,6 +4,7 @@ Main Application & Project Overview Dashboard.
 """
 
 import streamlit as st
+import streamlit.components.v1 as components
 import numpy as np
 
 from src.config import PRESET_MODULES, BoostConverterParams
@@ -58,8 +59,8 @@ with col1:
     st.markdown("### 🎯 Project Overview & Engineering Motivation")
     st.write(
         """
-        Photovoltaic (PV) power systems exhibit a distinctly non-linear current-voltage ($I-V$) 
-        and power-voltage ($P-V$) characteristic. Under any given environmental condition of 
+        Photovoltaic (PV) power systems exhibit a distinctly non-linear current-voltage (**I-V**) 
+        and power-voltage (**P-V**) characteristic. Under any given environmental condition of 
         solar irradiance ($G$) and cell temperature ($T$), there exists a unique operating point 
         where the solar array produces its theoretical maximum electrical power, known as the 
         **Maximum Power Point (MPP)**.
@@ -69,7 +70,10 @@ with col1:
         results in severe energy losses. A **Maximum Power Point Tracking (MPPT)** controller 
         continuously senses the panel electrical voltage and current, dynamically modulating the 
         pulse-width duty cycle ($D$) of a DC-DC boost converter to impedance-match the PV array 
-        to its load ($R_{in} = (1-D)^2 R_{load}$), driving the PV panel to operate precisely at $dP/dV = 0$.
+        to its load:
+        $$R_{in} = (1 - D)^2 R_{load}$$
+        driving the PV panel to operate precisely at the maximum power condition where:
+        $$\\frac{dP}{dV} = 0$$
         """
     )
     
@@ -91,50 +95,61 @@ with col1:
 with col2:
     st.markdown("### 📐 System Block Diagram")
     
-    # SVG-based clean electrical system block diagram
-    diagram_svg = """
-    <svg viewBox="0 0 540 310" xmlns="http://www.w3.org/2000/svg" style="width:100%; height:auto; background:#FFFFFF; border:1px solid #E2E8F0; border-radius:10px; padding:10px;">
-        <!-- PV Array -->
-        <rect x="20" y="30" width="110" height="90" rx="8" fill="#EFF6FF" stroke="#3B82F6" stroke-width="2"/>
-        <text x="75" y="65" font-family="Segoe UI, sans-serif" font-size="12" font-weight="bold" fill="#1E3A8A" text-anchor="middle">Solar PV Array</text>
-        <text x="75" y="85" font-family="Segoe UI, sans-serif" font-size="10" fill="#3B82F6" text-anchor="middle">Single-Diode Model</text>
-        <text x="75" y="102" font-family="Segoe UI, sans-serif" font-size="9" fill="#64748B" text-anchor="middle">G (W/m²), T (°C)</text>
+    diagram_html = """
+    <div style="display:flex; justify-content:center; align-items:center; width:100%; height:100%; background:#FFFFFF; border:1px solid #E2E8F0; border-radius:10px; padding:10px; box-sizing:border-box;">
+        <svg viewBox="0 0 540 310" xmlns="http://www.w3.org/2000/svg" style="width:100%; max-width:540px; height:auto; display:block;">
+            <defs>
+                <marker id="arrow" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                    <path d="M 0 1 L 10 5 L 0 9 z" fill="#0F172A"/>
+                </marker>
+                <marker id="arrow-red" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                    <path d="M 0 1 L 10 5 L 0 9 z" fill="#DC2626"/>
+                </marker>
+            </defs>
 
-        <!-- Connecting Wire 1 -->
-        <line x1="130" y1="75" x2="190" y2="75" stroke="#0F172A" stroke-width="2.5" marker-end="url(#arrow)"/>
-        <text x="160" y="65" font-family="Segoe UI, sans-serif" font-size="10" fill="#0F172A" font-weight="bold" text-anchor="middle">V_pv, I_pv</text>
+            <!-- PV Array -->
+            <rect x="20" y="30" width="110" height="90" rx="8" fill="#EFF6FF" stroke="#3B82F6" stroke-width="2"/>
+            <text x="75" y="65" font-family="Segoe UI, sans-serif" font-size="12" font-weight="bold" fill="#1E3A8A" text-anchor="middle">Solar PV Array</text>
+            <text x="75" y="85" font-family="Segoe UI, sans-serif" font-size="10" fill="#3B82F6" text-anchor="middle">Single-Diode Model</text>
+            <text x="75" y="102" font-family="Segoe UI, sans-serif" font-size="9" fill="#64748B" text-anchor="middle">G (W/m²), T (°C)</text>
 
-        <!-- Boost Converter -->
-        <rect x="190" y="30" width="160" height="90" rx="8" fill="#ECFDF5" stroke="#10B981" stroke-width="2"/>
-        <text x="270" y="60" font-family="Segoe UI, sans-serif" font-size="12" font-weight="bold" fill="#065F46" text-anchor="middle">DC-DC Boost Converter</text>
-        <text x="270" y="78" font-family="Segoe UI, sans-serif" font-size="10" fill="#059669" text-anchor="middle">L=2.5mH, C=470µF</text>
-        <text x="270" y="95" font-family="Segoe UI, sans-serif" font-size="9" fill="#047857" text-anchor="middle">R_in = (1-D)² R_load</text>
+            <!-- Connecting Wire 1 -->
+            <line x1="130" y1="75" x2="185" y2="75" stroke="#0F172A" stroke-width="2.5" marker-end="url(#arrow)"/>
+            <text x="158" y="65" font-family="Segoe UI, sans-serif" font-size="10" fill="#0F172A" font-weight="bold" text-anchor="middle">V_pv, I_pv</text>
 
-        <!-- Connecting Wire 2 -->
-        <line x1="350" y1="75" x2="410" y2="75" stroke="#0F172A" stroke-width="2.5"/>
-        <text x="380" y="65" font-family="Segoe UI, sans-serif" font-size="10" fill="#0F172A" font-weight="bold" text-anchor="middle">V_out</text>
+            <!-- Boost Converter -->
+            <rect x="190" y="30" width="160" height="90" rx="8" fill="#ECFDF5" stroke="#10B981" stroke-width="2"/>
+            <text x="270" y="60" font-family="Segoe UI, sans-serif" font-size="12" font-weight="bold" fill="#065F46" text-anchor="middle">DC-DC Boost Converter</text>
+            <text x="270" y="78" font-family="Segoe UI, sans-serif" font-size="10" fill="#059669" text-anchor="middle">L=2.5mH, C=470µF</text>
+            <text x="270" y="95" font-family="Segoe UI, sans-serif" font-size="9" fill="#047857" text-anchor="middle">R_in = (1-D)² R_load</text>
 
-        <!-- DC Load -->
-        <rect x="410" y="30" width="105" height="90" rx="8" fill="#F8FAFC" stroke="#64748B" stroke-width="2"/>
-        <text x="462" y="68" font-family="Segoe UI, sans-serif" font-size="12" font-weight="bold" fill="#334155" text-anchor="middle">Resistive Load</text>
-        <text x="462" y="88" font-family="Segoe UI, sans-serif" font-size="10" fill="#64748B" text-anchor="middle">R_load = 30 Ω</text>
+            <!-- Connecting Wire 2 -->
+            <line x1="350" y1="75" x2="405" y2="75" stroke="#0F172A" stroke-width="2.5" marker-end="url(#arrow)"/>
+            <text x="378" y="65" font-family="Segoe UI, sans-serif" font-size="10" fill="#0F172A" font-weight="bold" text-anchor="middle">V_out</text>
 
-        <!-- Feedback Senses to Controller -->
-        <line x1="160" y1="75" x2="160" y2="200" stroke="#64748B" stroke-width="1.8" stroke-dasharray="4,4"/>
-        <line x1="160" y1="200" x2="200" y2="200" stroke="#64748B" stroke-width="1.8" stroke-dasharray="4,4"/>
+            <!-- DC Load -->
+            <rect x="410" y="30" width="105" height="90" rx="8" fill="#F8FAFC" stroke="#64748B" stroke-width="2"/>
+            <text x="462" y="68" font-family="Segoe UI, sans-serif" font-size="12" font-weight="bold" fill="#334155" text-anchor="middle">Resistive Load</text>
+            <text x="462" y="88" font-family="Segoe UI, sans-serif" font-size="10" fill="#64748B" text-anchor="middle">R_load = 30 Ω</text>
 
-        <!-- MPPT Controller Box -->
-        <rect x="200" y="160" width="140" height="85" rx="8" fill="#FFFBEB" stroke="#F59E0B" stroke-width="2"/>
-        <text x="270" y="190" font-family="Segoe UI, sans-serif" font-size="12" font-weight="bold" fill="#92400E" text-anchor="middle">MPPT Controller</text>
-        <text x="270" y="208" font-family="Segoe UI, sans-serif" font-size="10" fill="#B45309" text-anchor="middle">Fuzzy Logic / P&O</text>
-        <text x="270" y="225" font-family="Segoe UI, sans-serif" font-size="9" fill="#78350F" text-anchor="middle">E = dP/dV, CE</text>
+            <!-- Feedback Senses to Controller -->
+            <line x1="160" y1="75" x2="160" y2="200" stroke="#64748B" stroke-width="1.8" stroke-dasharray="4,4"/>
+            <line x1="160" y1="200" x2="195" y2="200" stroke="#64748B" stroke-width="1.8" stroke-dasharray="4,4" marker-end="url(#arrow)"/>
 
-        <!-- Duty Cycle Control Line -->
-        <line x1="270" y1="160" x2="270" y2="120" stroke="#DC2626" stroke-width="2.2" marker-end="url(#arrow-red)"/>
-        <text x="290" y="145" font-family="Segoe UI, sans-serif" font-size="11" font-weight="bold" fill="#DC2626">Duty (D)</text>
-    </svg>
+            <!-- MPPT Controller Box -->
+            <rect x="200" y="160" width="140" height="85" rx="8" fill="#FFFBEB" stroke="#F59E0B" stroke-width="2"/>
+            <text x="270" y="190" font-family="Segoe UI, sans-serif" font-size="12" font-weight="bold" fill="#92400E" text-anchor="middle">MPPT Controller</text>
+            <text x="270" y="208" font-family="Segoe UI, sans-serif" font-size="10" fill="#B45309" text-anchor="middle">Fuzzy Logic / P&O</text>
+            <text x="270" y="225" font-family="Segoe UI, sans-serif" font-size="9" fill="#78350F" text-anchor="middle">E = dP/dV, CE</text>
+
+            <!-- Duty Cycle Control Line -->
+            <line x1="270" y1="160" x2="270" y2="125" stroke="#DC2626" stroke-width="2.2" marker-end="url(#arrow-red)"/>
+            <text x="290" y="145" font-family="Segoe UI, sans-serif" font-size="11" font-weight="bold" fill="#DC2626">Duty (D)</text>
+        </svg>
+    </div>
     """
-    st.markdown(diagram_svg, unsafe_allow_html=True)
+    components.html(diagram_html, height=330)
+    st.caption("Coupled Electro-Mechanical Closed-Loop MPPT System Architecture")
     st.caption("Coupled Electro-Mechanical Closed-Loop MPPT System Architecture")
 
 st.markdown("---")
